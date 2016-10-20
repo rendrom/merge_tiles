@@ -1,0 +1,12 @@
+.idea/
+*.pyc
+.env/
+env/
+output/
+.DS_Store
+build/
+dist/
+libs/
+*.swp
+log.html
+tmp/
