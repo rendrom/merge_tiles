@@ -273,7 +273,10 @@ class UrlTileMerger(TileMerger, object):
         return url.format(**locals())
 
     def get_url(self, x, y, z):
-        return self.simple_url(x, y, z, self.url, f=self.tile_format, **{"s": random.choice(self.subdomains)})
+        kwargs = {"s": None}
+        if len(self.subdomains):
+            kwargs["s"] = random.choice(self.subdomains)
+        return self.simple_url(x, y, z, self.url, f=self.tile_format, **kwargs)
 
 
 class BingMerger(TileMerger, object):
