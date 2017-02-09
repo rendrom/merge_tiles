@@ -270,7 +270,8 @@ class UrlTileMerger(TileMerger, object):
 
     def get_url(self, x, y, z):
         kwargs = {}
-        if self.subdomains:
+        subdomains_len = len(self.subdomains)
+        if subdomains_len:
             kwargs.s = random.choice(self.subdomains)
         return self.simple_url(x, y, z, self.url, f=self.tile_format, **kwargs)
 
@@ -510,7 +511,7 @@ def getopts():
     parser.add_argument('-t', '--template', action='store', type=str, required=False,
                         help='parse from custom tile server by URL template '
                              '(example: "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")')
-    parser.add_argument('-S', '--subdomains', action='store', type=str, required=False,
+    parser.add_argument('-S', '--subdomains', action='store', type=str, required=False, default="",
                         help='subdomains list for --template (example: -S "a,b,c")')
     parser.add_argument('-N', '--name', action='store', type=str, required=False,
                         help='output name for --template')
@@ -552,13 +553,14 @@ def main():
     opts = getopts()
     bbox = map(float, opts.bbox.split())
     tile = None
+    subdomains = opts.subdomains.split(",") if opts.subdomains else []
     if opts.service:
         tile = LAYERS[opts.service](bbox=tuple(bbox), zoom=opts.zoom, threads=15)
     elif opts.template:
         try:
             name = opts.name if opts.name else slugify(unicode(opts.template))
             tile = UrlTileMerger(url=opts.template, bbox=tuple(bbox), zoom=opts.zoom, threads=15,
-                                 file_name_prefix=name, subdomains=opts.subdomains.split(","))
+                                 file_name_prefix=name, subdomains=subdomains)
         except Exception as er:
             err(er.message)
     if tile:
