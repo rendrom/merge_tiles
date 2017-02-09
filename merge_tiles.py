@@ -71,7 +71,7 @@ class TileMerger:
     use_cache = True
 
     def __init__(self, zoom, bbox, tile_format='.jpg', threads=7, file_name_prefix=None, output_dir=None,
-                 with_log=True):
+                 with_log=True, reverse_y=False):
         if output_dir:
             self.output_dir = output_dir
         if file_name_prefix:
@@ -84,6 +84,7 @@ class TileMerger:
         self.zoom = zoom
         self.tile_format = tile_format
         self.bbox = bbox
+        self.reverse_y = reverse_y
         self.xy_range = self.set_xy_range()
         self.total = self.calc_total()
         self.tile_dir = self.get_tile_dir(zoom)
@@ -186,7 +187,10 @@ class TileMerger:
             imx = 0
             for x in range(xy_range["xMin"], xy_range["xMax"] + 1):
                 imy = 0
-                for y in range(xy_range["yMin"], xy_range["yMax"] + 1):
+                y_range = range(xy_range["yMin"], xy_range["yMax"] + 1)
+                if self.reverse_y:
+                    y_range = reversed(y_range)
+                for y in y_range:
                     tile_file = os.path.join(self.tile_dir, "%s_%s%s" % (x, y, self.tile_format))
                     tile = Image.open(tile_file)
                     out.paste(tile, (imx, imy))
@@ -269,11 +273,7 @@ class UrlTileMerger(TileMerger, object):
         return url.format(**locals())
 
     def get_url(self, x, y, z):
-        kwargs = {}
-        subdomains_len = len(self.subdomains)
-        if subdomains_len:
-            kwargs.s = random.choice(self.subdomains)
-        return self.simple_url(x, y, z, self.url, f=self.tile_format, **kwargs)
+        return self.simple_url(x, y, z, self.url, f=self.tile_format, **{"s": random.choice(self.subdomains)})
 
 
 class BingMerger(TileMerger, object):
@@ -515,6 +515,8 @@ def getopts():
                         help='subdomains list for --template (example: -S "a,b,c")')
     parser.add_argument('-N', '--name', action='store', type=str, required=False,
                         help='output name for --template')
+    parser.add_argument('-R', '--reverse_y', action='store_const', const=True, required=False, default=False,
+                        help='output name for --template')
     opts = parser.parse_args()
     opts.rootdir = os.path.abspath(opts.rootdir)
     if not (opts.service or opts.template):
@@ -560,7 +562,7 @@ def main():
         try:
             name = opts.name if opts.name else slugify(unicode(opts.template))
             tile = UrlTileMerger(url=opts.template, bbox=tuple(bbox), zoom=opts.zoom, threads=15,
-                                 file_name_prefix=name, subdomains=subdomains)
+                                 file_name_prefix=name, subdomains=subdomains, reverse_y=opts.reverse_y)
         except Exception as er:
             err(er.message)
     if tile:
