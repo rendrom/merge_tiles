@@ -516,7 +516,7 @@ def getopts():
     parser.add_argument('-N', '--name', action='store', type=str, required=False,
                         help='output name for --template')
     parser.add_argument('-R', '--reverse_y', action='store_const', const=True, required=False, default=False,
-                        help='output name for --template')
+                        help='change order of Y row')
     opts = parser.parse_args()
     opts.rootdir = os.path.abspath(opts.rootdir)
     if not (opts.service or opts.template):
